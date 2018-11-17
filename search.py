@@ -1,11 +1,12 @@
 import scholarly
+import re
 from typing import List, Dict, Tuple
 
 class Study():
     def __init__(self, title: str, url: str, author: str):
         self.title = title
         self.url = url
-        self.author = author
+        self.author = author.split("-")[0].strip()
 
     def get_title(self):
         return self.title
@@ -16,32 +17,49 @@ class Study():
     def get_author(self):
         return self.author
 
+    def __str__(self):
+        return self.title + ", " + self.author + ", " + self.url
+
 
 def get_all_studies(keywords: List[str]) -> List[Study]:
     retval = []
+    print(' '.join(keywords))
     query = scholarly.search_pubs_query(' '.join(keywords))
+    #
+    # for i in range(10):
+    #     try:
+    #         res = next(query)
+    #         retval.append(Study(res.bib['title'], res.bib['url'], res.bib['author']))
+    #     except KeyError:
+    #         retval.append(Study(res.bib['title'], "", res.bib['author']))
+    #     except StopIteration:
+    #         pass
 
-    try:
-        res = next(query)
-        retval.append([Study(res.bib.title, res.bib.url, res.bib.author)])
-
-    except StopIteration:
-        pass
+    while True:
+        try:
+            res = next(query)
+            retval.append(Study(res.bib['title'], res.bib['url'], res.bib['author']))
+        except KeyError:
+            retval.append(Study(res.bib['title'], "", res.bib['author']))
+        except StopIteration:
+            break
 
     return retval
 
-
-def passes_filters(study: Study, filters: List[List[str]]) -> bool:
-    study_kw = set(Study.get_title().split())
-    for f in filters:
+def passes_filters(study: Study, includes: List[List[str]], excludes: List[str]) -> bool:
+    title = re.sub('[,?!;]', " ", study.get_title())
+    study_kw = set(title.lower().split())
+    for f in includes:
         filter_set = set(f)
         if len(study_kw & filter_set) > 0:
             continue
         else:
-            return false
-    return true
+            return False
+    if len(study_kw & set(excludes)) > 0:
+        return False
+    return True
 
-def filter_studies(studies: List[Study], filters: List[List[str]]) -> List[Study]:
+def filter_studies(studies: List[Study], includes: List[List[str]], excludes: List[str]) -> List[Study]:
     """
     Filters studies by title. Condition for inclusion is that the title contains
     one word from each filter list in filter
@@ -51,20 +69,39 @@ def filter_studies(studies: List[Study], filters: List[List[str]]) -> List[Study
     [['prevention', 'education', 'training'], ['violence', 'sexual', 'consent']]
     as the filters argument
     """
-    return [s for s in studies if passes_filters(s, filters)]
+    return [s for s in studies if passes_filters(s, includes, excludes)]
+
+
+def write_studies_to_file(studies: List[Study], filename: str):
+    with open(filename, 'w+') as f:
+        for s in studies:
+            f.write(str(s) + "\n")
+
 
 def main():
-
-    filter1 = ['orientation', 'train', 'training', 'program', 'prevent', 'prevention', 'educate', 'education']
-    filter2 = ['assault', 'violence', 'sexual', 'consent', 'rape']
+    # Set to lowercase!
+    filter1 = ['orientation', "change", "changes", "changing", "intervene", "intervention", "interventions",
+               "intervening", 'train', 'training', "trainings", 'program', "programs", 'programming',
+               'prevent', 'preventing', 'prevention', 'educate', 'educating',
+               'education']
+    filter2 = ['sexual', 'assault', 'violence', 'consent', 'rape', 'bystander']
     others = ['college', 'campus', 'effectiveness']
-    keywords = filter1 + filter2 + others
+    keywords = ['intervention', 'training', 'program', 'prevention', 'education'] + filter2 + others
 
     studies = get_all_studies(keywords)
 
-    print("Found {} search results on Google Scholar".format(len(studies)))
-    filters = [filter1, filter2]
+    write_studies_to_file(studies, "search_results.txt")
 
-    filtered_studies = filter_studies(studies, filters)
+    print("Found {} search results on Google Scholar".format(len(studies)))
+    includes = [filter1, filter2]
+    excludes = ["military"]
+
+    filtered_studies = filter_studies(studies, includes, excludes)
+
+    write_studies_to_file(filtered_studies, "filtered_results.txt")
 
     print("After filtering, {} articles were deemed relevant".format(len(filtered_studies)))
+    return filtered_studies
+
+
+main()
