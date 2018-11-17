@@ -1,12 +1,6 @@
 import scholarly
 from typing import List, Dict, Tuple
 
-
-keywords = ['orientation', 'assault', 'sexual', 'consent',
-            'violence', 'college', 'training', 'program', 'effectiveness',
-            'campus', 'prevent', 'education', 'prevention', 'rape']
-
-
 class Study():
     def __init__(self, title: str, url: str, author: str):
         self.title = title
@@ -58,3 +52,19 @@ def filter_studies(studies: List[Study], filters: List[List[str]]) -> List[Study
     as the filters argument
     """
     return [s for s in studies if passes_filters(s, filters)]
+
+def main():
+
+    filter1 = ['orientation', 'train', 'training', 'program', 'prevent', 'prevention', 'educate', 'education']
+    filter2 = ['assault', 'violence', 'sexual', 'consent', 'rape']
+    others = ['college', 'campus', 'effectiveness']
+    keywords = filter1 + filter2 + others
+
+    studies = get_all_studies(keywords)
+
+    print("Found {} search results on Google Scholar".format(len(studies)))
+    filters = [filter1, filter2]
+
+    filtered_studies = filter_studies(studies, filters)
+
+    print("After filtering, {} articles were deemed relevant".format(len(filtered_studies)))
