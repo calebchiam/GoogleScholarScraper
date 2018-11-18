@@ -1,6 +1,7 @@
 import scholarly
 import re
 from typing import List, Dict, Tuple
+from random import shuffle
 
 class Study():
     def __init__(self, title: str, url: str, author: str):
@@ -23,8 +24,10 @@ class Study():
 
 def get_all_studies(keywords: List[str]) -> List[Study]:
     retval = []
-    print(' '.join(keywords))
-    query = scholarly.search_pubs_query(' '.join(keywords))
+    shuffle(keywords)
+    shuffled = ' '.join(keywords)
+    print(shuffled)
+    query = scholarly.search_pubs_query(shuffled)
     #
     # for i in range(10):
     #     try:
@@ -83,10 +86,10 @@ def main():
     filter1 = ['orientation', "change", "changes", "changing", "intervene", "intervention", "interventions",
                "intervening", 'train', 'training', "trainings", 'program', "programs", 'programming',
                'prevent', 'preventing', 'prevention', 'educate', 'educating',
-               'education']
+               'education', 'protect', 'protects', 'protection', 'eliminate', 'elimination', 'eliminates']
     filter2 = ['sexual', 'assault', 'violence', 'consent', 'rape', 'bystander']
     others = ['college', 'campus', 'effectiveness']
-    keywords = ['intervention', 'training', 'program', 'prevention', 'education'] + filter2 + others
+    keywords = ['intervention', 'training', 'program', 'prevention', 'education'] + ['sexual', 'assault', 'violence', 'consent', 'rape'] + others
 
     studies = get_all_studies(keywords)
 
